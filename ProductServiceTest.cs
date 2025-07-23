@@ -12,6 +12,10 @@ public class ProductServiceTest
         _inMemoryDb = new InMemoryDb();
     }
 
+    /*
+     * Try to add product successfully with product complete
+     * Result: Add product in database
+     */
     [Fact]
     public async Task AddProductSuccessfull()
     {
@@ -29,10 +33,30 @@ public class ProductServiceTest
         };
 
         //Act
-        var product = service.AddProduct(productDTO);
+        var product = await service.AddProduct(productDTO);
 
+        //Assert
         Assert.NotNull(product);
-        Assert.Equal("ProductTest", product.Result.Name);
+        Assert.Equal("ProductTest", product.Name);
         Assert.Single(database.Products);
+    }
+
+    /*
+     * Try to add product successfully with null 
+     * Result: Don't add product un database
+     */
+    [Fact]
+    public async Task AddProductNull() 
+    { 
+        //Arrage
+        var db = _inMemoryDb.GetInMemory();
+        var service = new ProductService(db);
+
+        //Act
+        var product = await service.AddProduct(null);
+
+        //Assert
+        Assert.Null(product);
+        Assert.Empty(db.Products);
     }
 }
