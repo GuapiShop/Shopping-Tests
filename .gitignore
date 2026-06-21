@@ -26,3 +26,8 @@ TestResults/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Test coverage
+TestResults/
+CoverageReport/
+*.cobertura.xml
