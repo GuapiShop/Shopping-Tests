@@ -25,5 +25,34 @@ namespace Shopping.Tests.Helpers
             await db.SaveChangesAsync();
             return user;
         }
+
+        public static async Task<Product> SeedProductAsync(
+            AppDbContext db,
+            long id = 1,
+            string name = "Test Product",
+            string category = "Electronics",
+            decimal price = 9999,
+            decimal taxCabys = 0.13m,
+            int quantity = 10,
+            bool isActive = true)
+        {
+            var product = new Product
+            {
+                Id = id,
+                Name = name,
+                Description = "A test product description",
+                Category = category,
+                CodeCabys = "123456",
+                DescriptionCabys = "Test CABYS description",
+                Price = price,
+                TaxCabys = taxCabys,
+                Quantity = quantity,
+                IsActive = isActive,
+                CreateAt = DateTime.UtcNow
+            };
+            db.Products.Add(product);
+            await db.SaveChangesAsync();
+            return product;
+        }
     }
 }
