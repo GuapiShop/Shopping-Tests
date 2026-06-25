@@ -185,5 +185,156 @@ namespace Shopping.Tests.Services
 
             await Assert.ThrowsAsync<UserAlreadyExistsException>(() => service.UpdateUser(userB.Id, dto));
         }
+
+        [Fact]
+        public async Task DisableUser_ActiveUser_DisablesSuccessfully()
+        {
+            var db = new InMemoryDb().GetInMemory();
+            var seeded = await TestDataSeeder.SeedUserAsync(db);
+            var service = new UserService(db);
+
+            await service.DisableUser(seeded.Id);
+            var result = await service.GetUserById(seeded.Id);
+
+            Assert.False(result.IsActive);
+        }
+
+        [Fact]
+        public async Task DisableUser_AlreadyDisabled_ThrowsUserAlreadyDisabledException()
+        {
+            var db = new InMemoryDb().GetInMemory();
+            var seeded = await TestDataSeeder.SeedUserAsync(db);
+            var service = new UserService(db);
+            await service.DisableUser(seeded.Id);
+
+            await Assert.ThrowsAsync<UserAlreadyDisabledException>(() => service.DisableUser(seeded.Id));
+        }
+
+        [Fact]
+        public async Task DisableUser_NonExistingId_ThrowsUserNotFoundException()
+        {
+            var db = new InMemoryDb().GetInMemory();
+            var service = new UserService(db);
+
+            await Assert.ThrowsAsync<UserNotFoundException>(() => service.DisableUser(999));
+        }
+
+        [Fact]
+        public async Task EnableUser_DisabledUser_EnablesSuccessfully()
+        {
+            var db = new InMemoryDb().GetInMemory();
+            var seeded = await TestDataSeeder.SeedUserAsync(db);
+            var service = new UserService(db);
+            await service.DisableUser(seeded.Id);
+
+            await service.EnableUser(seeded.Id);
+            var result = await service.GetUserById(seeded.Id);
+
+            Assert.True(result.IsActive);
+        }
+
+        [Fact]
+        public async Task EnableUser_AlreadyActive_ThrowsUserAlreadyEnabledException()
+        {
+            var db = new InMemoryDb().GetInMemory();
+            var seeded = await TestDataSeeder.SeedUserAsync(db);
+            var service = new UserService(db);
+
+            await Assert.ThrowsAsync<UserAlreadyEnabledException>(() => service.EnableUser(seeded.Id));
+        }
+
+        [Fact]
+        public async Task EnableUser_NonExistingId_ThrowsUserNotFoundException()
+        {
+            var db = new InMemoryDb().GetInMemory();
+            var service = new UserService(db);
+
+            await Assert.ThrowsAsync<UserNotFoundException>(() => service.EnableUser(999));
+        }
+
+        [Fact]
+        public async Task UserExists_ExistingId_ReturnsTrue()
+        {
+            var db = new InMemoryDb().GetInMemory();
+            var seeded = await TestDataSeeder.SeedUserAsync(db);
+            var service = new UserService(db);
+
+            var exists = await service.UserExists(seeded.Id);
+
+            Assert.True(exists);
+        }
+
+        [Fact]
+        public async Task UserExists_NonExistingId_ReturnsFalse()
+        {
+            var db = new InMemoryDb().GetInMemory();
+            var service = new UserService(db);
+
+            var exists = await service.UserExists(999);
+
+            Assert.False(exists);
+        }
+
+        [Fact]
+        public async Task DeleteUser_ExistingId_RemovesUserFromDatabase()
+        {
+            var db = new InMemoryDb().GetInMemory();
+            var seeded = await TestDataSeeder.SeedUserAsync(db);
+            var service = new UserService(db);
+
+            await service.DeleteUser(seeded.Id);
+
+            var exists = await service.UserExists(seeded.Id);
+            Assert.False(exists);
+        }
+
+        [Fact]
+        public async Task DeleteUser_NonExistingId_ThrowsUserNotFoundException()
+        {
+            var db = new InMemoryDb().GetInMemory();
+            var service = new UserService(db);
+
+            await Assert.ThrowsAsync<UserNotFoundException>(() => service.DeleteUser(999));
+        }
+
+        [Fact]
+        public async Task DeleteUser_ExistingId_DoesNotAffectOtherUsers()
+        {
+            var db = new InMemoryDb().GetInMemory();
+            var userA = await TestDataSeeder.SeedUserAsync(db, email: "userA@email.com");
+            var userB = new API_Shopping.Models.User
+            {
+                Id = 2,
+                Username = "userB",
+                Email = "userB@email.com",
+                Password = BCrypt.Net.BCrypt.HashPassword("pass"),
+                Role = "client",
+                IsActive = true,
+                CreateAt = DateTime.UtcNow
+            };
+            db.Users.Add(userB);
+            await db.SaveChangesAsync();
+
+            var service = new UserService(db);
+
+            await service.DeleteUser(userA.Id);
+
+            var userAExists = await service.UserExists(userA.Id);
+            var userBExists = await service.UserExists(userB.Id);
+            Assert.False(userAExists);
+            Assert.True(userBExists);
+        }
+
+        [Fact]
+        public async Task DeleteUser_ExistingId_GetUserByIdThrowsAfterDeletion()
+        {
+            var db = new InMemoryDb().GetInMemory();
+            var seeded = await TestDataSeeder.SeedUserAsync(db);
+            var service = new UserService(db);
+
+            await service.DeleteUser(seeded.Id);
+
+            await Assert.ThrowsAsync<UserNotFoundException>(() => service.GetUserById(seeded.Id));
+        }
     }
 }
