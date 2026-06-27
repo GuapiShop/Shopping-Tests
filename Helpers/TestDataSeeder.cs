@@ -1,4 +1,5 @@
 ﻿using API_Shopping.Context;
+using API_Shopping.Enums;
 using API_Shopping.Models;
 
 namespace Shopping.Tests.Helpers
@@ -53,6 +54,41 @@ namespace Shopping.Tests.Helpers
             db.Products.Add(product);
             await db.SaveChangesAsync();
             return product;
+        }
+
+        public static async Task<ShoppingCart> SeedCartAsync(
+            AppDbContext db,
+            long userId = 1)
+        {
+            var cart = new ShoppingCart
+            {
+                Status = ShoppingCartStatus.Pending,
+                UserId = userId,
+                CreatedAt = DateTime.UtcNow,
+                ItemShoppingCarts = new List<ItemShoppingCart>()
+            };
+            db.ShoppingCarts.Add(cart);
+            await db.SaveChangesAsync();
+            return cart;
+        }
+
+        public static async Task<ItemShoppingCart> SeedCartItemAsync(
+            AppDbContext db,
+            long cartId,
+            long productId,
+            int quantity = 2,
+            int unitPrice = 100)
+        {
+            var item = new ItemShoppingCart
+            {
+                shoppingCartId = cartId,
+                productId = productId,
+                Quantity = quantity,
+                UnitPrice = unitPrice,
+            };
+            db.ItemShoppingCarts.Add(item);
+            await db.SaveChangesAsync();
+            return item;
         }
     }
 }
