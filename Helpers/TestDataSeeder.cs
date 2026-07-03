@@ -90,5 +90,65 @@ namespace Shopping.Tests.Helpers
             await db.SaveChangesAsync();
             return item;
         }
+
+        public static async Task<ShoppingCart> SeedCartWithItemsAsync(
+            AppDbContext db,
+            long userId,
+            List<(long productId, int quantity)> items)
+        {
+            var cart = new ShoppingCart
+            {
+                UserId = userId,
+                Status = ShoppingCartStatus.Pending,
+                CreatedAt = DateTime.UtcNow,
+                ItemShoppingCarts = new List<ItemShoppingCart>()
+            };
+
+            db.ShoppingCarts.Add(cart);
+            await db.SaveChangesAsync();
+
+            foreach (var (productId, quantity) in items)
+            {
+                db.ItemShoppingCarts.Add(new ItemShoppingCart
+                {
+                    shoppingCartId = cart.Id,
+                    productId = productId,
+                    Quantity = quantity,
+                    UnitPrice = 100,
+                });
+            }
+
+            await db.SaveChangesAsync();
+            return cart;
+        }
+
+        public static async Task SeedPendingOrderWithDetailsAsync(
+            AppDbContext db,
+            long userId,
+            long productId,
+            int quantity = 2,
+            decimal price = 500)
+        {
+            var order = new Order
+            {
+                UserId = userId,
+                State = "pending",
+                CreateAt = DateTime.UtcNow,
+            };
+
+            db.Orders.Add(order);
+            await db.SaveChangesAsync();
+
+            db.Details.Add(new Detail
+            {
+                OrderId = order.Id,
+                ProductId = productId,
+                Quantity = quantity,
+                Price = price,
+                Total = quantity * price,
+            });
+
+            await db.SaveChangesAsync();
+        }
     }
 }
